@@ -83,10 +83,10 @@ void molecule::prepare_Chebyshev_polynomial_evolution_imag_time( ){
 
     imag_Bessel_function_array = new double [imag_N_chebyshev + 1];
     for(i=0; i <= imag_N_chebyshev; i++){
-        imag_Bessel_function_array[i] = std::cyl_bessel_i(i, imag_Chebyshev_R_times_imag_time) ;  // modified Bessel function of first kind I_{i}(random_wave_func_real)
+        imag_Bessel_function_array[i] = std::cyl_bessel_i(i, imag_Chebyshev_R_times_imag_time) ;  // modified Bessel function of first kind I_{i}(multiple_wave_func_real)
     }
 
-    // Used for recursive solving T_{n}(random_wave_func_real) : T_{n+1}(random_wave_func_real) = 2* random_wave_func_real * T_{n}(random_wave_func_real) - T_{n-1}(random_wave_func_real)
+    // Used for recursive solving T_{n}(multiple_wave_func_real) : T_{n+1}(multiple_wave_func_real) = 2* multiple_wave_func_real * T_{n}(multiple_wave_func_real) - T_{n-1}(multiple_wave_func_real)
     for(i=0;i<6;i++){
         vector <double> v ( basis_set_num + to_recv_buffer_len , 0 );
         imag_time_Chebyshev_polyn.push_back(v);
@@ -114,15 +114,15 @@ void molecule:: free_space_for_imag_Chebyshev_method(){
     delete [] imag_recv_polyn;
 }
 
-void molecule::Chebyshev_method_Boltzmann_factor_multiple_wave_func(const vector<vector<double>> & wave_func_real , const vector<vector<double>> & wave_func_imag,
-                                                                    vector<vector<double>> & Boltzmann_factor_weighted_wave_func_real, vector<vector<double>> & Boltzmann_factor_weighted_wave_func_imag , double imag_time){
+void molecule::Chebyshev_method_imag_time_multiple_wave_func(const vector<vector<double>> & wave_func_real , const vector<vector<double>> & wave_func_imag,
+                                                             vector<vector<double>> & imag_time_evolved_wave_func_real, vector<vector<double>> & imag_time_evolved_wave_func_imag , double imag_time){
     int i,j;
     int step_number;
     step_number = int(imag_time / delt);
 
 
-    Boltzmann_factor_weighted_wave_func_real.clear();
-    Boltzmann_factor_weighted_wave_func_imag.clear();
+    imag_time_evolved_wave_func_real.clear();
+    imag_time_evolved_wave_func_imag.clear();
 
     for(i=0; i< Haar_random_state_num; i++){
         vector<double> Boltzmann_factor_weighted_wave_func_real_element;
@@ -140,8 +140,8 @@ void molecule::Chebyshev_method_Boltzmann_factor_multiple_wave_func(const vector
         Boltzmann_factor_weighted_wave_func_imag_element = wave_func_imag_copy;
 
 
-        Boltzmann_factor_weighted_wave_func_real.push_back(Boltzmann_factor_weighted_wave_func_real_element);
-        Boltzmann_factor_weighted_wave_func_imag.push_back(Boltzmann_factor_weighted_wave_func_imag_element);
+        imag_time_evolved_wave_func_real.push_back(Boltzmann_factor_weighted_wave_func_real_element);
+        imag_time_evolved_wave_func_imag.push_back(Boltzmann_factor_weighted_wave_func_imag_element);
     }
 
 
@@ -152,7 +152,7 @@ void molecule::Chebyshev_method_Boltzmann_factor_multiple_wave_func(const vector
 
 void molecule::Chebyshev_method_imag_time_single_wavefunc(vector<double> & wave_func_real , vector<double> & wave_func_imag ){
     // compute Bolzmann weighted wave function .
-    // input :: one_fourth_beta,  random_wave_func_real,  wave_func_imag
+    // input :: one_fourth_beta,  multiple_wave_func_real,  wave_func_imag
     // output :: Boltzmann_factor_weighted_wave_func_x ,  Boltzmann_factor_weighted_wave_func_y
     // caution: before call this function, make sure update wave function component from other process.
     // have to update
@@ -209,7 +209,7 @@ void molecule::Chebyshev_method_imag_time_single_wavefunc(vector<double> & wave_
         bess = imag_Bessel_function_array[k];
         prefactor = imag_Chebyshev_prefactor * bess * 2 ;
 
-        // Use Chebyshev polynomial relationship  T_{k+2}(random_wave_func_real) = 2 * random_wave_func_real *  T_{k+1}(random_wave_func_real) - T_{k}(random_wave_func_real)
+        // Use Chebyshev polynomial relationship  T_{k+2}(multiple_wave_func_real) = 2 * multiple_wave_func_real *  T_{k+1}(multiple_wave_func_real) - T_{k}(multiple_wave_func_real)
         for(i=0;i< mat_num ; i++ ){
             irow_index = local_irow[i];
             icol_index = local_icol[i];

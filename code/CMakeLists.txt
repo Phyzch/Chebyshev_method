@@ -19,6 +19,7 @@ add_executable(code
         molecule.h
         prepare_evolution.cpp
         util.h
-        update_wave_func.cpp)
+        update_wave_func.cpp
+        Quantum_Evolution.cpp)
 
 target_link_libraries(${PROJECT_NAME} stdc++fs mpi)

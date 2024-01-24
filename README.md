@@ -1,4 +1,4 @@
-# Note about Chebyshev method code
+# README
 
 The code is based on Chebyshev method for evolving wave function, which is documented in this paper: [An accurate and efficient scheme for propagating the time dependent Schrödinger equation | The Journal of Chemical Physics | AIP Publishing](https://aip.scitation.org/doi/10.1063/1.448136)
 
@@ -131,23 +131,17 @@ if(search_Ind!=NULL){
    }
 ```
 
-
+<div style="page-break-after: always;"></div>
 
 ### 2. Evolve_Chebyshev_method_real_time
 
 This cpp file include functions to evolve the wave function $\psi$ in real time with Chebyshev polynomial. For the explanation of the Chebyshev method, see the note in the ./reference/Numerical method Chebyshev.pdf and also the original paper.
 
-
-
 The function in the **Evolve_Chebyshev_method_real_time.cpp** should be self-explained with the comment I provided. I will provide detailed explanation in this note below for this code.
-
-
 
 #### 2.1 prepare_Chebyshev_polynomial_evolution_real_time
 
 This function prepare variables we used to evolve wave function in real time using Chebyshev polynomials.
-
-
 
 Explanation of the variables:
 
@@ -169,20 +163,18 @@ Explanation of the variables:
 
 (9) **real_send_polyn** , **real_recv_polyn** :  Used for MPI to communicate about the Chebyshev polynomial when we do matrix vector multiplication across different processes. Used in function: **update_poly23()**.  **update_poly23()** function is used both for evolving wave function in real time and imaginary time.
 
-
-
 #### 2.2 Chebyshev_method_real_time_single_wave_func()
 
 Evolve a wave function forward in time $dt$ , 
 
 $$
-\psi(t+dt) = e^{-i\hat{H} dt} \psi(t) = \sum_{k=  0}^N a_k T_k(\hat{\omega}) \psi(t)
+\psi(t+dt) = e^{-i\hat{H} dt} \psi(t) = \sum_{k=  0}^N a_k \phi_k(\hat{\omega}) \psi(t)
 $$
 
 Here $a_{n}$ is prefactor, $T_{n}$ is the Chebyshev polynomial. $\hat{\omega} = - i (H - E) / R $,  See previous section for $E$ and $R$ .The details are given as following:
 
 $$
-a_{k} = e^{i E \cdot dt} \times C_{k} \times J_{k}(R dt)
+a_{k} = e^{-i E \cdot dt} \times C_{k} \times J_{k}(R dt)
 $$
 
 $E = (V_{max} + V_{min})/2$
@@ -191,21 +183,29 @@ Here $C_{k} = 1$ if $k=0$,  $C_{k} = 2$ if $k \geq 0$ .
 
 $J_{k}(R)$ is Bessel function of first kind of order $k$, where $R = (V_{max} - V_{min}) * 0.55$
 
+$\phi_{k}$ are imaginary version of Chebyshev polynomials, in the program, they are computed using the recursive relation as following:
 
-
-$T_{k}$ are Chebyshev polynomial, in the program, they are computed using the recursive relation as following:
-
-$T_{0}(\hat{\omega}) = 1$ , $T_{1}(\hat{\omega}) = \hat{\omega}$ .
+$\phi_{0}(\hat{\omega}) = 1$ , $\phi_{1}(\hat{\omega}) = \hat{\omega}$ .
 
 which implies,
 
-$T_{0}(\hat{\omega}) \psi = \psi$ , $T_{1} (\hat{\omega}) \psi = \hat{\omega} \times \psi$
+$\phi_{0}(\hat{\omega}) \psi = \psi$ , $\phi_{1} (\hat{\omega}) \psi = \hat{\omega} \times \psi$
 
 $$
-T_k(\widehat{\omega}) \psi=2 \widehat{\omega}\left(T_{k-1}(\widehat{\omega}) \psi\right)+T_{k-2}(\widehat{\omega}) \psi
+\phi_k(\widehat{\omega}) \psi=2 \widehat{\omega}\left(\phi_{k-1}(\widehat{\omega}) \psi\right) + \phi_{k-2}(\widehat{\omega}) \psi
 $$
 
+The relation of imaginary version of Chebyshev polynomials $\phi_{k}$ are real version of Chebyshev polynomials are following: (here $\omega$ is imaginary variable)
 
+$$
+\phi_{k}(\omega) = (i)^{k} T_{k}( -i \omega )
+$$
+
+The original recursive relation for the Chebyshev polynomials $T_{k}$ are following:
+
+$$
+T_{k}( x ) = 2 x T_{k-1} (x) - T_{k-2}(x)
+$$
 
 Below we explain the code in detail:
 
@@ -227,9 +227,7 @@ Below we explain the code in detail:
 
 **bess** = $J_{0}(R \cdot dt)$ , **air** = $\cos(E \cdot dt) \times J_{0}(R \cdot dt)$ . **aii** = $\sin(E \cdot dt) \times J_{0}(R \cdot dt)$
 
-At this stage, **creal , cimag**  are real and imag parts of: $a_{0} T_{0}(\hat{\omega}) \psi(t) = a_{0} \psi(t)$ , 
-
- 
+At this stage, **creal , cimag**  are real and imag parts of: $a_{0} \phi_{0}(\hat{\omega}) \psi(t) = a_{0} \psi(t)$ , 
 
 (2)
 
@@ -257,19 +255,13 @@ At this stage, **creal , cimag**  are real and imag parts of: $a_{0} T_{0}(\hat{
 
 **bess** = $J_{1}(R \cdot dt)$ , **air** = $2 \cos(E \cdot dt) \times J_{1}(R \cdot dt)$ , **aii** = $2 \sin(E \cdot dt) \times J_{1}(R \cdot dt)$ 
 
+**real_time_Chebyshev_polyn[2]** : real part of Chebyshev polynomial. $\phi_{1}(\hat{\omega}) \psi$
 
+**real_time_Chebyshev_polyn[3]** : imaginary part of Chebyshev polynomial. $\phi_{1}(\hat{\omega}) \psi$
 
-**real_time_Chebyshev_polyn[2]** : real part of Chebyshev polynomial. $T_{1}(\hat{\omega}) \psi$
+$\phi_{1}(\hat{\omega}) \psi = \hat{\omega} \psi$ , here $\hat{\omega} = (\hat{H} - E) / R$
 
-**real_time_Chebyshev_polyn[3]** : imaginary part of Chebyshev polynomial. $T_{1}(\hat{\omega}) \psi$
-
-
-
-$T_{1}(\hat{\omega}) \psi = \hat{\omega} \psi$ , here $\hat{\omega} = (\hat{H} - E) / R$
-
-At this stage, **creal** , **cimag** are real and imag parts of $a_{0} T_{0}(\hat{\omega}) \psi(t) + a_{1} T_{1}(\hat{\omega}) \psi(t)$.
-
-
+At this stage, **creal** , **cimag** are real and imag parts of $a_{0} \phi_{0}(\hat{\omega}) \psi(t) + a_{1} \phi_{1}(\hat{\omega}) \psi(t)$.
 
 (3)
 
@@ -326,45 +318,35 @@ At this stage, **creal** , **cimag** are real and imag parts of $a_{0} T_{0}(\ha
 
 For the matrix vector multiplication, we need to update wave function array before we do it, as this matrix vector multiplication is implemented across different processes.
 
-
-
 The following code can be summarized as following:
 
-**real_time_Chebyshev_polyn[4]** : real part of $T_{k}(\hat{\omega})$ 
+**real_time_Chebyshev_polyn[4]** : real part of $\phi_{k}(\hat{\omega})$ 
 
-**real_time_Chebyshev_polyn[5]** : imag part of $T_{k}(\hat{\omega})$
+**real_time_Chebyshev_polyn[5]** : imag part of $\phi_{k}(\hat{\omega})$
 
-**real_time_Chebyshev_polyn[2]** : real part of $T_{k-1}(\hat{\omega})$
+**real_time_Chebyshev_polyn[2]** : real part of $\phi_{k-1}(\hat{\omega})$
 
-**real_time_Chebyshev_polyn[3]** : imag part of $T_{k-1}(\hat{\omega})$
+**real_time_Chebyshev_polyn[3]** : imag part of $\phi_{k-1}(\hat{\omega})$
 
-**real_time_Chebyshev_polyn[0]** : real part of $T_{k-2}(\hat{\omega})$
+**real_time_Chebyshev_polyn[0]** : real part of $\phi_{k-2}(\hat{\omega})$
 
-**real_time_Chebyshev_polyn[1]** : imag part of $T_{k-2}(\hat{\omega})$
-
-
+**real_time_Chebyshev_polyn[1]** : imag part of $\phi_{k-2}(\hat{\omega})$
 
 WIth the equation:
 
 $$
-T_k(\widehat{\omega}) \psi=2 \widehat{\omega}\left(T_{k-1}(\widehat{\omega}) \psi\right)+T_{k-2}(\widehat{\omega}) \psi
+\phi_k(\widehat{\omega}) \psi=2 \widehat{\omega}\left(\phi_{k-1}(\widehat{\omega}) \psi\right) + \phi_{k-2}(\widehat{\omega}) \psi
 $$
 
-We can see when we compute $T_{k}(\hat{\omega}) \psi$  (**real_time_Chebyshev_polyn[4]** , **real_time_Chebyshev_polyn[5]**) , we only need matrix vector multiplication for term: $\hat{\omega} \cdot T_{k-1}(\hat{\omega}) \psi$ , therefore, only $T_{k-1}(\hat{\omega}) \psi$ (**real_time_Chebyshev_polyn[2]**, **real_time_Chebyshev_polyn[3]**) need to be updated at each time step. This is performed by using function **update_poly23()**.
-
-
+We can see when we compute $\phi_{k}(\hat{\omega}) \psi$  (**real_time_Chebyshev_polyn[4]** , **real_time_Chebyshev_polyn[5]**) , we only need matrix vector multiplication for term: $\hat{\omega} \cdot \phi_{k-1}(\hat{\omega}) \psi$ , therefore, only $\phi_{k-1}(\hat{\omega}) \psi$ **real_time_Chebyshev_polyn[2]**, **real_time_Chebyshev_polyn[3]**) need to be updated at each time step. This is performed by using function **update_poly23()**.
 
 Other parts of the code should be self-explanary.
 
-
-
-#### update_poly23()
+#### 2.3. update_poly23()
 
 As we have mentioned in the previous section, **update_poly23()** is used to update **real_time_Chebyshev_polyn[2]**, **real_time_Chebyshev_polyn[3]** .
 
 The pre-requisite for using this function is by calling **prepare_evolution()** function in the **prepare_evolution.cpp** , which will prepare the variable for communication of wave function vectors between processes.
-
-
 
 Let's look at this code in detail, readers should also refer to **prepare_evolution()** function for better understanding this part.
 
@@ -383,8 +365,6 @@ Let's look at this code in detail, readers should also refer to **prepare_evolut
 
 The wave function data we need to send to other processes are collected in **send_polyn[2]** , **send_polyn[3]**.
 
-
-
 (2)
 
 ```cpp
@@ -395,8 +375,6 @@ MPI_Alltoallv(&send_polyn[3][0],tosendVecCount,tosendVecPtr,MPI_DOUBLE,
 ```
 
 Use [**MPI_Alltoallv()**](https://www.mpich.org/static/docs/v3.0.x/www3/MPI_Alltoallv.html) function to send the wave function data in **send_polyn** to **recv_polyn**. The information for sending these data (**tosendVecCount**, **tosendVecPtr**) and receiving these data (**remoteVecCount** , **remoteVecPtr**) are constructed in **preprare_evolution()** function.
-
-
 
 (3)
 
@@ -410,8 +388,6 @@ Use [**MPI_Alltoallv()**](https://www.mpich.org/static/docs/v3.0.x/www3/MPI_Allt
 Append the wave function components received from other processes at the end of the wave function array. 
 
 Remember, the **local_icol** will point to these data when we implemenet matrix vector multiplication.
-
-
 
 (4) After using **update_poly23()** function, the matrix vector multiplication for updating wave function is performed as following:
 
@@ -430,12 +406,56 @@ for(i=0; i< mat_num; i++) {
         }
 ```
 
-
-
 We can see now we use **local_irow** and **local_icol** to perform matrix vector multiplication across different processes. **local_icol** will point to the additional elements at the end of wave function array if they it correpond to the data received from other processes. See **prepare_evolution()** function for more detail.
 
+<div style="page-break-after: always;"></div>
 
+### Evolve_wave_func_imag_time_Chebyshev_polynomial
 
+This file evolve the Chebyshev polynomial in imaginary time.  The variable are similar to the function that evolve the wave function in real time, therefore, I will not repeat explaining them here. I will only point out the technical detail difference below.
 
+$~$
 
+Suppose we want to compute:
 
+$$
+\psi(\beta) = e^{-\beta H} \psi(0)
+$$
+
+What we do is split the $e^{-\beta H}$ into small parts and evolve wave function in imaginary time:
+
+$$
+\psi(\tau + \Delta \tau) = e^{- H \Delta \tau} \psi (\tau)
+$$
+
+By setting $\Delta \tau = i \Delta t$ , we can see:
+
+$$
+e^{- H \Delta \tau} = e^{- i H \Delta t}
+$$
+
+Therefore, we can again express $e^{-H\Delta \tau}$ in Chebyshev polynomials :
+
+$$
+\psi(\tau + \Delta \tau) = e^{- H \Delta \tau} \psi (\tau) =  \sum_{k=  0}^N a_k T_k(\hat{\omega}) \psi(\tau)
+$$
+
+$$
+a_{k} = e^{ -E \cdot \Delta \tau} \times C_{k} \times J_{k}( - i R \Delta \tau)
+$$
+
+(1)
+
+Notice $J_{k}(-iR \Delta \tau) = I_{k}( R \Delta \tau)$ , which is modified Bessel function of first kind. See this [webpage](https://www.wikiwand.com/en/Bessel_function#Modified_Bessel_functions:_I%CE%B1,_K%CE%B1) for details.
+
+In the code, this is implemented by **std::cyl_bessel_i()** function.
+
+(2)
+
+Notice the recursive relation for Chebyshev polynomial of $T_{k}(\hat{\omega})$ is different from $\phi_{k}(\hat{\omega})$ :
+
+$$
+T_{k}( x ) = 2 x T_{k-1} (x) - T_{k-2}(x)
+$$
+
+Other than that,the code for evolve wave function in imaginary time should be the same to the code that evolve wave function in real time.

@@ -24,8 +24,8 @@ private:
     int total_mat_num;
     vector<int> matnum_each_process;
 
-    vector<vector<double>> random_wave_func_real, random_wave_func_imag;  // real part of wave function random_wave_func_real, imaginary part of wave function random_wave_func_imag
-    vector<vector<double>> random_wave_func_real_all, random_wave_func_imag_all;
+    vector<vector<double>> multiple_wave_func_real, multiple_wave_func_imag;  // real part of wave function multiple_wave_func_real, imaginary part of wave function multiple_wave_func_imag
+    vector<vector<double>> multiple_wave_func_real_all, multiple_wave_func_imag_all;
 
     int * remoteVecCount,  * remoteVecPtr,  *  remoteVecIndex;
     int * tosendVecCount,  *tosendVecPtr,  * tosendVecIndex;
@@ -114,7 +114,7 @@ private:
 
 
 public:
-
+    void Quantum_Evolution();
 
     // prepare evolution
     void prepare_evolution();
@@ -135,8 +135,8 @@ public:
 
     void Chebyshev_method_imag_time_single_wavefunc(vector<double> & wave_func_real , vector<double> & wave_func_imag);
 
-    void Chebyshev_method_Boltzmann_factor_multiple_wave_func(const vector<vector<double>> & wave_func_real , const vector<vector<double>> & wave_func_imag,
-                                                              vector<vector<double>> & Boltzmann_factor_weighted_wave_func_real, vector<vector<double>> & Boltzmann_factor_weighted_wave_func_imag , double imag_time);
+    void Chebyshev_method_imag_time_multiple_wave_func(const vector<vector<double>> & wave_func_real , const vector<vector<double>> & wave_func_imag,
+                                                       vector<vector<double>> & imag_time_evolved_wave_func_real, vector<vector<double>> & imag_time_evolved_wave_func_imag , double imag_time);
 
     // Chebyshev method in real time
     void prepare_Chebyshev_polynomial_evolution_real_time();

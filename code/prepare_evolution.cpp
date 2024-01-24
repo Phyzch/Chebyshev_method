@@ -120,7 +120,7 @@ void molecule::prepare_evolution(){
 
     int * search_Ind; // local variable, used for compute local_icol;
     int col_index_to_search;
-    // local column index used when we do H *random_wave_func_real and H*random_wave_func_imag
+    // local column index used when we do H *multiple_wave_func_real and H*multiple_wave_func_imag
 
     // buffer to send and receive buffer to/from other process.
     recv_wave_func_real= new double * [Haar_random_state_num];
@@ -135,8 +135,8 @@ void molecule::prepare_evolution(){
                                                      tosendVecCount, tosendVecPtr, tosendVecIndex);
 
     for(m=0; m < Haar_random_state_num; m++){
-        random_wave_func_real[m].resize(basis_set_num + to_recv_buffer_len);
-        random_wave_func_imag[m].resize(basis_set_num + to_recv_buffer_len);
+        multiple_wave_func_real[m].resize(basis_set_num + to_recv_buffer_len);
+        multiple_wave_func_imag[m].resize(basis_set_num + to_recv_buffer_len);
         recv_wave_func_real[m] = new double [to_recv_buffer_len];
         recv_wave_func_imag[m]= new double [to_recv_buffer_len];
         send_wave_func_real[m]= new double [to_send_buffer_len];
