@@ -244,6 +244,4 @@ void molecule::Chebyshev_method_imag_time_single_wavefunc(vector<double> & wave_
 
     }
 
-
-
 }

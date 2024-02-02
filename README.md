@@ -153,7 +153,7 @@ Explanation of the variables:
 
 (4) **real_Chebyshev_R_t_** = $(V_{max} - V_{min}) * 0.55 * dt$
 
-(5) **real_Chebyshev_exp_real** , **real_Chebyshev_exp_imag** : real and imaginary part of prefactor $e^{i(E*dt)}$ . real part = $\cos(E * dt)$ , imag part = $\sin(E * dt)$  
+(5) **real_Chebyshev_expr** , **real_Chebyshev_expi** : real and imaginary part of prefactor $e^{i(E*dt)}$ . real part = $\cos(E * dt)$ , imag part = $\sin(E * dt)$  
 
 (6) **N_Chebyshev** : order of Chebyshev polynomial to use.
 
@@ -215,8 +215,8 @@ Below we explain the code in detail:
  // zeroth order, C0 = 1, J0(Rt) * exp(-i* e0 * dt) * wavefunction
     // air, aii represent real and imaginary part of prefactor.  See second page of my note for definition of prefactor ak.
     bess = real_Bessel_function_array[0];
-    air = real_Chebyshev_exp_real * bess;
-    aii = real_Chebyshev_exp_imag * bess * time_evolve_sign;
+    air = real_Chebyshev_expr * bess;
+    aii = real_Chebyshev_expi * bess * time_evolve_sign;
 
     // creal, cimag = a0 * T0(omega)
     for(i=0;i< basis_set_num ;i++){
@@ -234,8 +234,8 @@ At this stage, **creal , cimag**  are real and imag parts of: $a_{0} \phi_{0}(\h
 ```cpp
     // first order of Chebyshev polynomial. See third page of my note for recursive relation of Chebyshev polynomial.
     bess = real_Bessel_function_array[1] * pow(time_evolve_sign , 1); // J1(R)
-    air = 2 * bess * real_Chebyshev_exp_real; // C1 = 2.  real part of prefactor
-    aii = 2 * bess * real_Chebyshev_exp_imag * time_evolve_sign; // imaginary part of prefactor.
+    air = 2 * bess * real_Chebyshev_expr; // C1 = 2.  real part of prefactor
+    aii = 2 * bess * real_Chebyshev_expi * time_evolve_sign; // imaginary part of prefactor.
     for(i = 0;i < mat_num; i++){
         irow_index = local_irow[i];
         icol_index = local_icol[i];
@@ -273,8 +273,8 @@ At this stage, **creal** , **cimag** are real and imag parts of $a_{0} \phi_{0}(
     // T_{k}(omega) * psi = 2 * omega * T_{k-1}(omega) * psi + T_{k-2}(omega) * psi.
     for(k = 2; k <= real_N_chebyshev; k++){
         bess = real_Bessel_function_array[k] * pow(time_evolve_sign, k);
-        air = 2 * bess * real_Chebyshev_exp_real; // Ck = 2. bess = bessel function of order k. air : real part of prefactor
-        aii = 2 * bess * real_Chebyshev_exp_imag * time_evolve_sign; // aii : imaginary part of pre-factor.
+        air = 2 * bess * real_Chebyshev_expr; // Ck = 2. bess = bessel function of order k. air : real part of prefactor
+        aii = 2 * bess * real_Chebyshev_expi * time_evolve_sign; // aii : imaginary part of pre-factor.
 
         // use Chebychev polynomial recursion relationship. J_{k+2}( -i *  normalized_wave_func) = J_{k+1}(-i * normalized_wave_func) *2 * (-i  *normalized_wave_func) + J_{k}( -i * normalized_wave_func), normalized_wave_func=  (H - E)/ R
         for(i=0; i< mat_num; i++) {
@@ -441,12 +441,12 @@ $$
 $$
 
 $$
-a_{k} = e^{ -E \cdot \Delta \tau} \times C_{k} \times J_{k}( - i R \Delta \tau)
+a_{k} = e^{ -E \cdot \Delta \tau} \times C_{k} \times I_{k}( R \Delta \tau)
 $$
 
 (1)
 
-Notice $J_{k}(-iR \Delta \tau) = I_{k}( R \Delta \tau)$ , which is modified Bessel function of first kind. See this [webpage](https://www.wikiwand.com/en/Bessel_function#Modified_Bessel_functions:_I%CE%B1,_K%CE%B1) for details.
+Notice $ I_{k}( R \Delta \tau)$ , which is modified Bessel function of first kind. See this [webpage](https://www.wikiwand.com/en/Bessel_function#Modified_Bessel_functions:_I%CE%B1,_K%CE%B1) for details.
 
 In the code, this is implemented by **std::cyl_bessel_i()** function.
 
