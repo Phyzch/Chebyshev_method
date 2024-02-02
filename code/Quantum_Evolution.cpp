@@ -18,6 +18,7 @@ void molecule::Quantum_Evolution(){
 
     // prepare send and receive buffer for MPI state evolution.
     prepare_evolution();
+
     // prepare wave function evolution using Chebyshev method in imag time;
     prepare_Chebyshev_polynomial_evolution_imag_time();
     // prepare wave function using Chebyshev method in real time;

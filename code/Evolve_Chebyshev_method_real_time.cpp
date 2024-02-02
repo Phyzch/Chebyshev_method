@@ -43,8 +43,8 @@ void molecule::prepare_Chebyshev_polynomial_evolution_real_time(){
     }
 
     real_Chebyshev_R_t = real_Chebyshev_R * delt;
-    real_Chebyshev_expr = std::cos(delt * real_Chebyshev_e0); // real part of exp(i[Vmax + Vmin]/2 * t)
-    real_Chebyshev_expi = std::sin(delt * real_Chebyshev_e0); // imaginary part of exp( i[Vmax + Vmin] /2 *t)
+    real_Chebyshev_exp_real = std::cos(delt * real_Chebyshev_e0); // real part of exp(i[Vmax + Vmin]/2 * t)
+    real_Chebyshev_exp_imag = std::sin(delt * real_Chebyshev_e0); // imaginary part of exp( i[Vmax + Vmin] /2 *t)
 
     // order of Chebyshev polynomial to compute to ensure convergence.
     int N_Chebyshev_minimum = 10;
@@ -102,7 +102,7 @@ void molecule:: Chebyshev_method_real_time_single_wave_func(vector<double> & wav
     int i, j, k , m;
     int irow_index , icol_index;
     double bess;
-    double air, aii;
+    double a_real, a_imag;
 
     update_individual_wave_func(wave_func_real);
     update_individual_wave_func(wave_func_imag);
@@ -117,8 +117,8 @@ void molecule:: Chebyshev_method_real_time_single_wave_func(vector<double> & wav
     else{
         time_evolve_sign = -1; // evolve backward.
         // it is equivalent to setting delt = - delt in function prepare_Chebyshev_polynomial_evolution_real_time
-        // need to take care of real_Chebyshev_R_t, real_Chebyshev_expi.
-        // for real_Chebyshev_expi : real_Chebyshev_expi * (-1)
+        // need to take care of real_Chebyshev_R_t, real_Chebyshev_exp_imag.
+        // for real_Chebyshev_exp_imag : real_Chebyshev_exp_imag * (-1)
         // for real_Chebyshev_R_t : real_Bessel_function_array[i] = real_Bessel_function_array[i] * (-1)^{i}. See Bessel function of first kind :  https://www.wikiwand.com/en/Bessel_function#Bessel_functions_of_the_first_kind:_J.CE.B1
     }
 
@@ -133,21 +133,21 @@ void molecule:: Chebyshev_method_real_time_single_wave_func(vector<double> & wav
     }
 
     // zeroth order, C0 = 1, J0(Rt) * exp(-i* e0 * dt) * wavefunction
-    // air, aii represent real and imaginary part of prefactor.  See second page of my note for definition of prefactor ak.
+    // a_real, a_imag represent real and imaginary part of prefactor.  See second page of my note for definition of prefactor ak.
     bess = real_Bessel_function_array[0];
-    air = real_Chebyshev_expr * bess;
-    aii = real_Chebyshev_expi * bess * time_evolve_sign;
+    a_real = real_Chebyshev_exp_real * bess;
+    a_imag = real_Chebyshev_exp_imag * bess * time_evolve_sign;
 
     // creal, cimag = a0 * T0(omega)
     for(i=0;i< basis_set_num ;i++){
-        creal[i] = air * real_time_Chebyshev_polyn[0][i] - aii * real_time_Chebyshev_polyn[1][i];
-        cimag[i] = air * real_time_Chebyshev_polyn[1][i] + aii * real_time_Chebyshev_polyn[0][i];
+        creal[i] = a_real * real_time_Chebyshev_polyn[0][i] - a_imag * real_time_Chebyshev_polyn[1][i];
+        cimag[i] = a_real * real_time_Chebyshev_polyn[1][i] + a_imag * real_time_Chebyshev_polyn[0][i];
     }
 
     // first order of Chebyshev polynomial. See third page of my note for recursive relation of Chebyshev polynomial.
     bess = real_Bessel_function_array[1] * pow(time_evolve_sign , 1); // J1(R)
-    air = 2 * bess * real_Chebyshev_expr; // C1 = 2.  real part of prefactor
-    aii = 2 * bess * real_Chebyshev_expi * time_evolve_sign; // imaginary part of prefactor.
+    a_real = 2 * bess * real_Chebyshev_exp_real; // C1 = 2.  real part of prefactor
+    a_imag = 2 * bess * real_Chebyshev_exp_imag * time_evolve_sign; // imaginary part of prefactor.
     for(i = 0;i < mat_num; i++){
         irow_index = local_irow[i];
         icol_index = local_icol[i];
@@ -160,8 +160,8 @@ void molecule:: Chebyshev_method_real_time_single_wave_func(vector<double> & wav
 
     // creal , cimag = a0 * T0(omega) + a1 * T1(omega)
     for(i = 0; i < basis_set_num; i++){
-        creal[i] = creal[i] + air * real_time_Chebyshev_polyn[2][i] - aii * real_time_Chebyshev_polyn[3][i];
-        cimag[i] = cimag[i] + air * real_time_Chebyshev_polyn[3][i] + aii * real_time_Chebyshev_polyn[2][i];
+        creal[i] = creal[i] + a_real * real_time_Chebyshev_polyn[2][i] - a_imag * real_time_Chebyshev_polyn[3][i];
+        cimag[i] = cimag[i] + a_real * real_time_Chebyshev_polyn[3][i] + a_imag * real_time_Chebyshev_polyn[2][i];
     }
 
     // update wave function array real_time_Chebyshev_polyn[2] & real_time_Chebyshev_polyn[3] for matrix vector multiplication.
@@ -171,10 +171,12 @@ void molecule:: Chebyshev_method_real_time_single_wave_func(vector<double> & wav
     // T_{k}(omega) * psi = 2 * omega * T_{k-1}(omega) * psi + T_{k-2}(omega) * psi.
     for(k = 2; k <= real_N_chebyshev; k++){
         bess = real_Bessel_function_array[k] * pow(time_evolve_sign, k);
-        air = 2 * bess * real_Chebyshev_expr; // Ck = 2. bess = bessel function of order k. air : real part of prefactor
-        aii = 2 * bess * real_Chebyshev_expi * time_evolve_sign; // aii : imaginary part of pre-factor.
+        a_real = 2 * bess * real_Chebyshev_exp_real; // Ck = 2. bess = bessel function of order k. a_real : real part of prefactor
+        a_imag = 2 * bess * real_Chebyshev_exp_imag * time_evolve_sign; // a_imag : imaginary part of pre-factor.
 
-        // use Chebychev polynomial recursion relationship. J_{k+2}( -i *  normalized_wave_func) = J_{k+1}(-i * normalized_wave_func) *2 * (-i  *normalized_wave_func) + J_{k}( -i * normalized_wave_func), normalized_wave_func=  (H - E)/ R
+        // use Chebychev polynomial recursion relationship. phi_{k+2}( -i *  normalized_wave_func) = phi_{k+1}(-i * normalized_wave_func) *2 * (-i  *normalized_wave_func) + phi_{k}( -i * normalized_wave_func), normalized_wave_func=  (H - E)/ R
+
+        // this is 2 * omega * phi_{k-1}(omega) psi.
         for(i=0; i< mat_num; i++) {
             irow_index = local_irow[i];
             icol_index = local_icol[i];
@@ -189,7 +191,7 @@ void molecule:: Chebyshev_method_real_time_single_wave_func(vector<double> & wav
         }
 
         for(i = 0; i < basis_set_num; i++){
-            //  + T_{k-2}(omega) * psi.
+            //  + phi_{k-2}(omega) * psi.
             real_time_Chebyshev_polyn[4][i] = real_time_Chebyshev_polyn[4][i] + real_time_Chebyshev_polyn[0][i];
             real_time_Chebyshev_polyn[5][i] = real_time_Chebyshev_polyn[5][i] + real_time_Chebyshev_polyn[1][i];
         }
@@ -197,8 +199,8 @@ void molecule:: Chebyshev_method_real_time_single_wave_func(vector<double> & wav
         // update wave function.
         // + a_{k} * T_{k} (omega)
         for(i=0;i<basis_set_num; i++){
-            creal[i] = creal[i] + air * real_time_Chebyshev_polyn[4][i] - aii * real_time_Chebyshev_polyn[5][i];
-            cimag[i] = cimag[i] + air * real_time_Chebyshev_polyn[5][i] + aii * real_time_Chebyshev_polyn[4][i];
+            creal[i] = creal[i] + a_real * real_time_Chebyshev_polyn[4][i] - a_imag * real_time_Chebyshev_polyn[5][i];
+            cimag[i] = cimag[i] + a_real * real_time_Chebyshev_polyn[5][i] + a_imag * real_time_Chebyshev_polyn[4][i];
         }
 
         // to compute next order of Chebyshev polynomial, we make T_{k} -> T_{k-1}.

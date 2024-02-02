@@ -90,7 +90,7 @@ private:
     double **  imag_send_polyn, ** imag_recv_polyn;
 
     // for real time Chebyshev method. (to avoid bug and possible confliction, I declare another set of parameters)
-    double real_Chebyshev_e0, real_Chebyshev_R, real_Chebyshev_expr, real_Chebyshev_expi , real_Chebyshev_R_t;
+    double real_Chebyshev_e0, real_Chebyshev_R, real_Chebyshev_exp_real, real_Chebyshev_exp_imag , real_Chebyshev_R_t;
     double * real_time_normalized_mat;
     int real_N_chebyshev;
     double * real_Bessel_function_array;

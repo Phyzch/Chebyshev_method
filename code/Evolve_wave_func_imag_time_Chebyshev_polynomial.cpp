@@ -66,6 +66,7 @@ void molecule::prepare_Chebyshev_polynomial_evolution_imag_time( ){
         imag_time_shifted_mat[i] = imag_time_shifted_mat[i] / imag_Chebyshev_R;
     }
 
+    // fixme: this part is different from the real time algorithm.
     imag_Chebyshev_prefactor = std::exp(- delt * imag_Chebyshev_e0);
     imag_Chebyshev_R_times_imag_time = imag_Chebyshev_R * delt;  // used to decide order of Chebyshev polynomial we use.
 
@@ -83,7 +84,9 @@ void molecule::prepare_Chebyshev_polynomial_evolution_imag_time( ){
 
     imag_Bessel_function_array = new double [imag_N_chebyshev + 1];
     for(i=0; i <= imag_N_chebyshev; i++){
-        imag_Bessel_function_array[i] = std::cyl_bessel_i(i, imag_Chebyshev_R_times_imag_time) ;  // modified Bessel function of first kind I_{i}(multiple_wave_func_real)
+        // modified Bessel function of first kind I_{i}(multiple_wave_func_real)
+        //fixme: this part is different from real time evolution of wave function.
+        imag_Bessel_function_array[i] = std::cyl_bessel_i(i, imag_Chebyshev_R_times_imag_time) ;
     }
 
     // Used for recursive solving T_{n}(multiple_wave_func_real) : T_{n+1}(multiple_wave_func_real) = 2* multiple_wave_func_real * T_{n}(multiple_wave_func_real) - T_{n-1}(multiple_wave_func_real)
@@ -216,6 +219,8 @@ void molecule::Chebyshev_method_imag_time_single_wavefunc(vector<double> & wave_
             imag_time_Chebyshev_polyn[4][irow_index] = imag_time_Chebyshev_polyn[4][irow_index] + 2 * (-imag_time_shifted_mat[i]) * imag_time_Chebyshev_polyn[2][icol_index];
             imag_time_Chebyshev_polyn[5][irow_index] = imag_time_Chebyshev_polyn[5][irow_index] + 2 * (-imag_time_shifted_mat[i]) * imag_time_Chebyshev_polyn[3][icol_index];
         }
+
+        // fixme:  this part is different from the real time algorithm.
         for(i=0;i<basis_set_num;i++){
             imag_time_Chebyshev_polyn[4][i] = imag_time_Chebyshev_polyn[4][i] - imag_time_Chebyshev_polyn[0][i];
             imag_time_Chebyshev_polyn[5][i] = imag_time_Chebyshev_polyn[5][i] - imag_time_Chebyshev_polyn[1][i];
